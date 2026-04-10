@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "agenttest"
+version = "0.1.0"
+description = "pytest-native testing for AI agent workflows — record, replay, assert, score"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+keywords = ["ai", "agents", "testing", "pytest", "llm", "tracing"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Framework :: Pytest",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "pytest-asyncio"]
+schema = ["jsonschema>=4.0"]
+
+[project.scripts]
+agenttest = "agenttest.cli:main"
+
+[project.entry-points."pytest11"]
+agenttest = "agenttest.plugin"
+
+[project.urls]
+Homepage = "https://github.com/vtx-dev/agenttest"
+Repository = "https://github.com/vtx-dev/agenttest"
+Issues = "https://github.com/vtx-dev/agenttest/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["agenttest*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "examples/tests"]

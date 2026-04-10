@@ -1,0 +1,68 @@
+{
+  "name": "research_with_email",
+  "tool_calls": [
+    {
+      "tool": "search_web",
+      "args": {
+        "query": "AI agents in production"
+      },
+      "result": [
+        {
+          "url": "https://example.com/1",
+          "title": "Result for: AI agents in production"
+        },
+        {
+          "url": "https://example.com/2",
+          "title": "Another result for: AI agents in production"
+        }
+      ],
+      "error": null,
+      "duration_ms": 0.0,
+      "timestamp": "2026-04-10T14:29:25.099648+00:00",
+      "id": "70d23d24"
+    },
+    {
+      "tool": "fetch_url",
+      "args": {
+        "url": "https://example.com/1"
+      },
+      "result": "<article>Detailed content from https://example.com/1. AI agents are transforming software.</article>",
+      "error": null,
+      "duration_ms": 0.0,
+      "timestamp": "2026-04-10T14:29:25.099727+00:00",
+      "id": "7f4db5e7"
+    },
+    {
+      "tool": "summarize",
+      "args": {
+        "text": "<article>Detailed content from https://example.com/1. AI agents are transforming software.</article>",
+        "max_words": 30
+      },
+      "result": "Summary: <article>Detailed content from https://example.com/1. AI agents are transforming software.</article>",
+      "error": null,
+      "duration_ms": 0.0,
+      "timestamp": "2026-04-10T14:29:25.099788+00:00",
+      "id": "bdfc41eb"
+    },
+    {
+      "tool": "send_email",
+      "args": {
+        "to": "alice@example.com",
+        "subject": "Research summary: AI agents in production",
+        "body": "Summary: <article>Detailed content from https://example.com/1. AI agents are transforming software.</article>"
+      },
+      "result": "Email sent to alice@example.com",
+      "error": null,
+      "duration_ms": 0.0,
+      "timestamp": "2026-04-10T14:29:25.099847+00:00",
+      "id": "9c141cee"
+    }
+  ],
+  "messages": [],
+  "output": "Summary: <article>Detailed content from https://example.com/1. AI agents are transforming software.</article>\n\n(emailed to alice@example.com)",
+  "error": null,
+  "duration_ms": 0.30474300001515076,
+  "metadata": {},
+  "created_at": "2026-04-10T14:29:25.099525+00:00",
+  "id": "1c10c41a-5433-49b1-996b-6806574ede0d"
+}
