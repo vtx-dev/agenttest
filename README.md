@@ -229,19 +229,46 @@ Traces are plain JSON — store them in git alongside your tests.
 
 ---
 
+## Cloud: hosted trace storage + regression detection
+
+[**agenttests.dev**](https://agenttests.dev) is the hosted layer for agenttest — trace history, run dashboard, and automatic regression detection across deploys.
+
+```python
+tracer = Tracer(
+    suite="my-agent",
+    cloud_url="https://agenttests.dev",
+    cloud_api_key="at_...",   # get one free at agenttests.dev
+)
+
+# Every session auto-uploads. No other changes needed.
+with tracer.session("my_test") as trace:
+    my_agent.run(...)
+```
+
+What you get:
+- **Run history** — every session stored, searchable by suite
+- **Regression diff** — each run automatically compared to the previous one; sequence changes, new/dropped tools, and error rate shifts are flagged
+- **Run dashboard** — browse tool call timelines, jump to diffs, filter by suite
+- **Free to start** — register at [agenttests.dev](https://agenttests.dev)
+
+agenttest itself remains MIT-licensed and fully functional without the cloud.
+
+---
+
 ## Why not LangSmith / Langfuse?
 
-Those are great observability tools. agenttest is a testing library:
+Those are LLM observability tools. agenttest is a **testing library** focused on tool call sequences — not LLM inputs/outputs.
 
 | | agenttest | LangSmith / Langfuse |
 |--|-----------|----------------------|
 | Runs in CI/CD | ✓ | Requires cloud account |
 | Stored in git | ✓ (plain JSON) | Cloud only |
-| No LLM vendor lock-in | ✓ | ✓ |
+| Tool-call-first | ✓ | LLM-output-first |
 | Offline replay | ✓ | — |
 | Determinism scoring | ✓ | — |
-| pytest integration | Native | — |
-| Cost | Free / MIT | Paid tiers |
+| Regression detection | ✓ (agenttests.dev) | — |
+| pytest integration | Native | Plugin |
+| Core cost | Free / MIT | Paid tiers |
 
 ---
 

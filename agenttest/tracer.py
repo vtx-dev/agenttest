@@ -16,7 +16,10 @@ Usage:
 from __future__ import annotations
 
 import functools
+import json
 import time
+import urllib.request
+import urllib.error
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Callable, Optional
@@ -24,9 +27,29 @@ from typing import Any, Callable, Optional
 from .trace import Trace, ToolCall
 
 
+def _safe_serialize(obj: Any) -> Any:
+    """Best-effort JSON-serializable representation of a value."""
+    if obj is None or isinstance(obj, (bool, int, float, str)):
+        return obj
+    if isinstance(obj, (list, tuple)):
+        return [_safe_serialize(i) for i in obj]
+    if isinstance(obj, dict):
+        return {str(k): _safe_serialize(v) for k, v in obj.items()}
+    return str(obj)
+
+
 class Tracer:
-    def __init__(self, traces_dir: str | Path = "tests/traces"):
+    def __init__(
+        self,
+        traces_dir: str | Path = "tests/traces",
+        cloud_url: str | None = None,
+        cloud_api_key: str | None = None,
+        suite: str = "default",
+    ):
         self.traces_dir = Path(traces_dir)
+        self.cloud_url = (cloud_url or "").rstrip("/") or None
+        self.cloud_api_key = cloud_api_key or None
+        self.suite = suite
         self._current: Optional[Trace] = None
         self._wrapped: list[tuple[object, str, Callable]] = []  # (obj, attr, original)
 
@@ -52,6 +75,8 @@ class Tracer:
         finally:
             trace.duration_ms = (time.perf_counter() - t0) * 1000
             self._current = None
+            if self.cloud_url and self.cloud_api_key:
+                self._cloud_push(trace)
 
     # ── tool decorator ─────────────────────────────────────────────
 
@@ -132,6 +157,50 @@ class Tracer:
         path = self.traces_dir / f"{name}.trace.json"
         trace.save(path)
         print(f"[agenttest] trace saved → {path}")
+
+    # ── cloud push ─────────────────────────────────────────────────
+
+    def _cloud_push(self, trace: Trace) -> None:
+        """Upload a completed trace to agenttest cloud. Non-fatal on failure."""
+        from datetime import datetime, timezone
+        try:
+            started_at = datetime.fromisoformat(trace.created_at).timestamp()
+        except Exception:
+            started_at = time.time()
+
+        payload = {
+            "suite":      self.suite,
+            "session":    trace.name,
+            "started_at": started_at,
+            "duration_s": round(trace.duration_ms / 1000, 3) if trace.duration_ms else None,
+            "tool_calls": [
+                {
+                    "tool":     c.tool,
+                    "args":     c.args,
+                    "result":   _safe_serialize(c.result),
+                    "error":    c.error,
+                    "duration": round(c.duration_ms / 1000, 4) if c.duration_ms else None,
+                }
+                for c in trace.tool_calls
+            ],
+            "metadata": trace.metadata,
+        }
+        body = json.dumps(payload).encode()
+        req = urllib.request.Request(
+            f"{self.cloud_url}/v1/traces",
+            data=body,
+            headers={
+                "Authorization": f"Bearer {self.cloud_api_key}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=10) as r:
+                resp = json.loads(r.read())
+            print(f"[agenttest] cloud ↑ {trace.name} → {resp.get('run_url', resp.get('id', '?'))}")
+        except Exception as e:
+            print(f"[agenttest] cloud push failed for '{trace.name}': {e}")
 
     # ── MCP/OpenAI adapter helpers ─────────────────────────────────
 
